@@ -15,13 +15,11 @@ class Users:
         self.data = self._generate_users()
 
     def _generate_users(self):
-        #   # to ensure vot is the same everytime we draw it
 
         splits = 1
         df = pd.DataFrame(np.repeat(self.raw_od.values, splits, axis=0), columns=self.raw_od.columns)
         self.num_users = splits * df.shape[0]
 
-        # df['volume'] = round(df['volume'] / splits)
         df['volume'] = round(self.city_scaling[self.city] * df['volume']/splits)
 
         # TODO: draw volume from a distribution to go beyond theory!
@@ -31,7 +29,6 @@ class Users:
 
         df.rename(columns={"origin": "orig", "destination": "dest", "volume": "vol"}, inplace=True)
         data = df.to_dict('index')
-        # print("Total flow volume = ", df['vol'].sum())
         return data
 
     def vot_list(self):
@@ -44,12 +41,14 @@ class Users:
 
     def vot_realization(self):
         # TODO: FIXME
-        vot_array = 0.9 * np.ones(self.num_users) + 0.2 * np.random.rand(self.num_users)
-        # vot_array = 0.6 * np.ones(self.num_users) + 0.8 * np.random.rand(self.num_users)
+        vot_array = 1.3 * np.ones(self.num_users) + 0.2 * np.random.rand(self.num_users)
         # vot_array = np.ones(self.num_users)
         return vot_array
 
     def new_instance(self):
-        self.data = self._generate_users()
+        new_vot = self.vot_realization()
+        for u in self.data.keys():
+            self.data[u]['vot'] = new_vot[u]
+        # self.data = self._generate_users()
         return None
 

@@ -32,6 +32,8 @@ class Network:
 
         self.travel_time = self._estimate_tt_params()
 
+        self.edge_latency = self.latency_list()
+
         self.tt_adj = self._create_tt_adj()
         self.shortest_path_predecessor = None
 
