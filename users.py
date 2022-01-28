@@ -45,8 +45,8 @@ class Users:
 
     def vot_realization(self):
         # TODO: FIXME
-        #vot_array = 1.3 * np.ones(self.num_users) + 0.6 * np.random.rand(self.num_users)
-        vot_array = np.ones(self.num_users)
+        vot_array = 0.7 * np.ones(self.num_users) + 0.6 * np.random.rand(self.num_users)
+        #vot_array = np.ones(self.num_users)
         return vot_array
 
     def new_instance(self):

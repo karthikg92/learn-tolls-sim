@@ -8,8 +8,10 @@ from sqrt_trends import SqrtTrends
 # cp.enable()
 
 #Problem(name='sqrt_trends', params={'cities': ['SiouxFalls'], 'alg': ['gr_desc'], 'stationary': False})
-
 #SqrtTrends(alg='gr_desc')
+
+
+#SanityChecks()
 SqrtTrends()
 #JustifyVOT()
 

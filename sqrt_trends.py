@@ -22,16 +22,20 @@ class SqrtTrends:
         self.city = 'SiouxFalls'
 
         # Range of T values for the experiment
-        self.Trange = [10, 50, 100, 250]
+        self.Trange = [10, 50, 100, 250, 500]
 
         # Simulate gradient descent
-        log = self.simulate_gr_desc()
-        self.plot(log, self.folder_path + 'gr_desc_')
+        print('[sqrt_trends] Simulating gradient descent')
+        log_gr_desc = self.simulate_gr_desc()
+        self.plot(log_gr_desc, self.folder_path + 'gr_desc')
 
         # simulate stochastic program
-        log = self.simulate_stochastic_program()
-        self.plot(log, self.folder_path + 'stochastic_')
+        print('[sqrt_trends] Simulating stochastic program')
+        log_stochastic = self.simulate_stochastic_program()
+        self.plot(log_stochastic, self.folder_path + 'stochastic')
 
+        # compare performance
+        self.comparison_plot(log_gr_desc, log_stochastic, self.folder_path + 'comparison')
 
     @staticmethod
     def create_folder():
@@ -58,7 +62,28 @@ class SqrtTrends:
         axes[1].set_ylabel('Average Normalized Capacity Violation')
 
         plt.tight_layout()
-        plt.savefig(path + 'sqrt_trends.png')
+        plt.savefig(path + '.png')
+        plt.close()
+
+    @staticmethod
+    def comparison_plot(log_gr, log_sto, path):
+        fig, axes = plt.subplots(nrows=1, ncols=2)
+        fig.set_size_inches(12, 8)
+
+        axes[0].plot(log_gr['T'], log_gr['regret'], '*-', c='tab:blue', label='gr_desc')
+        axes[0].plot(log_sto['T'], log_sto['regret'], '*-', c='tab:orange', label='stochastic')
+        axes[0].set_xlabel('T')
+        axes[0].set_ylabel('Average Normalized Regret')
+        axes[0].legend(loc="upper right")
+
+        axes[1].plot(log_gr['T'], log_gr['violation'], '*-', c='blue', label='gr_desc')
+        axes[1].plot(log_sto['T'], log_sto['violation'], '*-', c='red', label='stochastic')
+        axes[1].set_xlabel('T')
+        axes[1].set_ylabel('Average Normalized Capacity Violation')
+        axes[1].legend(loc="upper right")
+
+        plt.tight_layout()
+        plt.savefig(path + '.png')
         plt.close()
 
     def simulate_gr_desc(self):
