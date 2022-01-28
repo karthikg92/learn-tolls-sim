@@ -100,8 +100,14 @@ class Network:
     def latency_list(self):
         return [c0 for c0, c1 in self.travel_time]
 
+    def latency_array(self):
+        return np.array([c0 for c0, c1 in self.travel_time])
+
     def capacity_list(self):
         return self.capacity
+
+    def capacity_array(self):
+        return np.array(self.capacity)
 
     def compute_shortest_path(self, tolls):
         adj_toll = np.zeros((self.NumNodes, self.NumNodes))

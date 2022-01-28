@@ -35,14 +35,18 @@ class Users:
         vot = [self.data[i]['vot'] for i in range(len(self.data))]
         return vot
 
+    def vot_array(self):
+        vot = [self.data[i]['vot'] for i in range(len(self.data))]
+        return np.array(vot)
+
     def user_flow_list(self):
         user_flow = [self.data[i]['vol'] for i in range(len(self.data))]
         return user_flow
 
     def vot_realization(self):
         # TODO: FIXME
-        vot_array = 1.3 * np.ones(self.num_users) + 0.2 * np.random.rand(self.num_users)
-        # vot_array = np.ones(self.num_users)
+        #vot_array = 1.3 * np.ones(self.num_users) + 0.6 * np.random.rand(self.num_users)
+        vot_array = np.ones(self.num_users)
         return vot_array
 
     def new_instance(self):

@@ -106,10 +106,15 @@ class Simulation:
             # update the tolls
             if alg == 'gr_desc' or alg == 'feasible_desc':
                 step_size = self.compute_step_size(t, max_steps, policy=step_policy)
-                toll = toll - step_size * (opt.f_opt - f)
+ #              toll = toll - step_size * (opt.f_opt - f)  # TODO: This should be capacity
+
+                toll = toll - step_size * (n.capacity - f)
+
                 toll[toll < 0] = 0  # cap the toll to be non-negative
 
             # compute performance
+            # TODO: Write this as a vector product
+
             obj = self.compute_objective(user.vot_list(), x, n.latency_list())
             opt_obj = self.compute_objective(user.vot_list(), opt.x_opt, n.latency_list())
 
