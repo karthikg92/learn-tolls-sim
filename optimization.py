@@ -4,7 +4,7 @@ from gurobipy import GRB
 from scipy.sparse.csgraph import shortest_path
 
 
-def compute_stochastic_program_toll(network, users, num_sim=1000):
+def compute_stochastic_program_toll(network, users, num_sim=1000, constant_vot=False):
 
     num_edges = network.NumEdges
     num_users = users.num_users
@@ -59,7 +59,12 @@ def compute_stochastic_program_toll(network, users, num_sim=1000):
     # objective function
     # Need to include all realizations of VOTs
 
-    sum_vot = sum([users.vot_realization() for _ in range(num_sim)])
+    if constant_vot is True:
+        # print('[Debug] Ensuring that constant VOTs are used to compute stochastic program tolls')
+        sum_vot = sum([users.vot_realization(fixed_vot=True) for _ in range(num_sim)])
+        # print('[Debug] Expect same numbers. Actual:', sum(sum_vot), num_sim*num_users)
+    else:
+        sum_vot = sum([users.vot_realization() for _ in range(num_sim)])
 
     obj = 1 / num_sim * sum([sum_vot[u] * x_eu[e, u] * network.edge_latency[e]
                              for e in range(num_edges)
@@ -198,8 +203,13 @@ def user_equilibrium_with_tolls(network, users, tolls):
             for n in exclude_od_nodes)
 
     # no capacity constraints
-    # for e in range(self.NumEdges):
-    #     m.addConstr(x_e[e] <= self.network.capacity[e], name='capacity' + str(e))
+    # for e in range(num_edges):
+    #   m.addConstr(x_e[e] <= network.capacity[e], name='capacity' + str(e))
+
+    # Additional constraint for debug purposes
+    # if opt_obj is not None:
+    #     m.addConstr(sum([users.data[u]['vot'] * x_eu[e, u] * network.edge_latency[e]
+    #                      for e in range(num_edges) for u in range(num_users)]) <= opt_obj)
 
     # objective function
     term1 = sum([x_e[e] * network.edge_latency[e] for e in range(num_edges)])
@@ -207,6 +217,10 @@ def user_equilibrium_with_tolls(network, users, tolls):
                  for e in range(num_edges) for u in range(num_users)])
     toll_obj = term1 + term2
     m.setObjective(toll_obj, GRB.MINIMIZE)
+
+    # print('[Debug] Ensure correct VOTs are bring used in optimization')
+    # vot_list = [users.data[u]['vot'] for u in range(num_users)]
+    # print('[Debug] Expect 1,1. Actual: ', min(vot_list), max(vot_list))
 
     # run the optimization
     m.optimize()
@@ -222,6 +236,10 @@ def user_equilibrium_with_tolls(network, users, tolls):
             x[e, u] = x_dict[e, u]
 
     f = np.sum(x, axis=1)
+
+    # print('[Debug] Expecting dim x as, ', num_edges, num_users)
+    # print('[Debug] Expecting dim f as, ', num_edges)
+    # print('[Debug] Dimensions of x and f are, ', np.shape(x), np.shape(f))
 
     return x, f
 
@@ -280,11 +298,13 @@ def optimal_flow(network, users):
         m.addConstr(x_e[e] <= network.capacity[e], name='capacity'+str(e))
 
     # objective function
-    so_obj = sum([users.data[u]['vot'] *
-                  x_eu[e, u] *
-                  network.edge_latency[e]
+    so_obj = sum([users.data[u]['vot'] * x_eu[e, u] * network.edge_latency[e]
                   for e in range(num_edges) for u in range(num_users)])
     m.setObjective(so_obj, GRB.MINIMIZE)
+
+    # print('[Debug] Ensure correct VOTs are bring used in optimization')
+    # vot_list = [users.data[u]['vot'] for u in range(num_users)]
+    # print('[Debug] Expect 1,1. Actual: ', min(vot_list), max(vot_list))
 
     # run the optimization
     m.optimize()
@@ -300,5 +320,9 @@ def optimal_flow(network, users):
             x[e, u] = x_dict[e, u]
 
     f = np.sum(x, axis=1)
+
+    # print('[Debug] Expecting dim x as, ', num_edges, num_users)
+    # print('[Debug] Expecting dim f as, ', num_edges)
+    # print('[Debug] Dimensions of x and f are, ', np.shape(x), np.shape(f))
 
     return x, f

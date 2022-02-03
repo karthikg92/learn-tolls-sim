@@ -64,7 +64,8 @@ class Network:
         return elist
 
     def _estimate_tt_params(self):
-        self.raw_edges['free_flow_time'] = (self.raw_edges['length'] / self.raw_edges['speed'] + 1)
+        # There was a +1 for the free flow time to ensure we don't divide by zero.
+        self.raw_edges['free_flow_time'] = (self.raw_edges['length'] / self.raw_edges['speed'])
         self.raw_edges['time_sensitivity'] = 2 * self.raw_edges['free_flow_time'] / self.raw_edges['capacity']
         tt_params = list(zip(self.raw_edges.free_flow_time, self.raw_edges.time_sensitivity))
         return tt_params

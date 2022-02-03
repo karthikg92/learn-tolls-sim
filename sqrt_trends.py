@@ -45,7 +45,7 @@ class SqrtTrends:
             root_folder_path = 'ResultLogs/SqrtTrends_' + path_time + '/'
             os.mkdir(root_folder_path)
         finally:
-            print('[JustifyVOT] Folder exists')
+            print('[sqrt_trends] Folder exists')
         return root_folder_path
 
     @staticmethod
@@ -76,8 +76,8 @@ class SqrtTrends:
         axes[0].set_ylabel('Average Normalized Regret')
         axes[0].legend(loc="upper right")
 
-        axes[1].plot(log_gr['T'], log_gr['violation'], '*-', c='blue', label='gr_desc')
-        axes[1].plot(log_sto['T'], log_sto['violation'], '*-', c='red', label='stochastic')
+        axes[1].plot(log_gr['T'], log_gr['violation'], '*-', c='tab:blue', label='gr_desc')
+        axes[1].plot(log_sto['T'], log_sto['violation'], '*-', c='tab:orange', label='stochastic')
         axes[1].set_xlabel('T')
         axes[1].set_ylabel('Average Normalized Capacity Violation')
         axes[1].legend(loc="upper right")
@@ -112,9 +112,11 @@ class SqrtTrends:
 
             for t in range(T):
 
+                # compute optimal flow
+                x_opt, f_opt = optimal_flow(network, users)
+
                 # compute user equilibrium
                 x, f = user_equilibrium_with_tolls(network, users, gr_desc_tolls)
-                x_opt, f_opt = optimal_flow(network, users)
 
                 # Updating gradient descent tolls
                 gr_desc_tolls += step_size * (f - np.array(network.capacity))
@@ -170,9 +172,11 @@ class SqrtTrends:
             violation_vec = np.zeros(network.NumEdges)
 
             for t in range(T):
+                # compute optimal flow
+                x_opt, f_opt = optimal_flow(network, users)
+
                 # compute user equilibrium
                 x, f = user_equilibrium_with_tolls(network, users, toll)
-                x_opt, f_opt = optimal_flow(network, users)
 
                 # compute regret
                 obj += network.latency_array() @ x @ users.vot_array()

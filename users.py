@@ -8,7 +8,7 @@ class Users:
 
     def __init__(self, city):
         assert isinstance(city, str)
-        self.city_scaling = {'SiouxFalls': 0.5}  # scale user flows to ensure feasibility
+        self.city_scaling = {'SiouxFalls': 0.5, 'Pigou_reprise': 1}  # scale user flows to ensure feasibility
         self.city = city
         self.raw_od = pd.read_csv("Locations/" + city + "/od.csv")
         self.num_users = None
@@ -43,16 +43,16 @@ class Users:
         user_flow = [self.data[i]['vol'] for i in range(len(self.data))]
         return user_flow
 
-    def vot_realization(self):
-        # TODO: FIXME
-        vot_array = 0.7 * np.ones(self.num_users) + 0.6 * np.random.rand(self.num_users)
-        #vot_array = np.ones(self.num_users)
+    def vot_realization(self, fixed_vot=False):
+        if fixed_vot:
+            vot_array = np.ones(self.num_users)
+        else:
+            vot_array = 0.7 * np.ones(self.num_users) + 0.6 * np.random.rand(self.num_users)
         return vot_array
 
-    def new_instance(self):
-        new_vot = self.vot_realization()
+    def new_instance(self, fixed_vot=False):
+        new_vot = self.vot_realization(fixed_vot=fixed_vot)
         for u in self.data.keys():
             self.data[u]['vot'] = new_vot[u]
-        # self.data = self._generate_users()
         return None
 
