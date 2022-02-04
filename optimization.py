@@ -66,9 +66,16 @@ def compute_stochastic_program_toll(network, users, num_sim=1000, constant_vot=F
     else:
         sum_vot = sum([users.vot_realization() for _ in range(num_sim)])
 
-    obj = 1 / num_sim * sum([sum_vot[u] * x_eu[e, u] * network.edge_latency[e]
-                             for e in range(num_edges)
-                             for u in range(num_users)])
+    # obj = 1 / num_sim * sum([sum_vot[u] * x_eu[e, u] * network.edge_latency[e]
+    #                          for e in range(num_edges)
+    #                          for u in range(num_users)])
+    #
+    obj = 0
+    for e in range(num_edges):
+        for u in range(num_users):
+            obj += sum_vot[u] * x_eu[e, u] * network.edge_latency[e]
+    obj *= 1 / num_sim
+
 
     m.setObjective(obj, GRB.MINIMIZE)
 
@@ -212,10 +219,20 @@ def user_equilibrium_with_tolls(network, users, tolls):
     #                      for e in range(num_edges) for u in range(num_users)]) <= opt_obj)
 
     # objective function
-    term1 = sum([x_e[e] * network.edge_latency[e] for e in range(num_edges)])
-    term2 = sum([1 / users.data[u]['vot'] * x_eu[e, u] * tolls[e]
-                 for e in range(num_edges) for u in range(num_users)])
-    toll_obj = term1 + term2
+    # term1 = sum([x_e[e] * network.edge_latency[e] for e in range(num_edges)])
+    # # TODO: VECTORIZE this term
+    # term2 = sum([1 / users.data[u]['vot'] * x_eu[e, u] * tolls[e]
+    #              for e in range(num_edges) for u in range(num_users)])
+    # toll_obj = term1 + term2
+
+    toll_obj = 0
+    for e in range(num_edges):
+        toll_obj += x_e[e] * network.edge_latency[e]
+        for u in range(num_users):
+            toll_obj += 1 / users.data[u]['vot'] * x_eu[e, u] * tolls[e]
+
+
+
     m.setObjective(toll_obj, GRB.MINIMIZE)
 
     # print('[Debug] Ensure correct VOTs are bring used in optimization')
@@ -223,7 +240,9 @@ def user_equilibrium_with_tolls(network, users, tolls):
     # print('[Debug] Expect 1,1. Actual: ', min(vot_list), max(vot_list))
 
     # run the optimization
+    print("Starting optimization")
     m.optimize()
+    print("Optimization complete")
 
     # If infeasible, terminate program
     assert m.status != GRB.INFEASIBLE
@@ -298,8 +317,14 @@ def optimal_flow(network, users):
         m.addConstr(x_e[e] <= network.capacity[e], name='capacity'+str(e))
 
     # objective function
-    so_obj = sum([users.data[u]['vot'] * x_eu[e, u] * network.edge_latency[e]
-                  for e in range(num_edges) for u in range(num_users)])
+    # so_obj = sum([users.data[u]['vot'] * x_eu[e, u] * network.edge_latency[e]
+    #               for e in range(num_edges) for u in range(num_users)])
+    #
+    so_obj = 0
+    for e in range(num_edges):
+        for u in range(num_users):
+            so_obj += users.data[u]['vot'] * x_eu[e, u] * network.edge_latency[e]
+
     m.setObjective(so_obj, GRB.MINIMIZE)
 
     # print('[Debug] Ensure correct VOTs are bring used in optimization')

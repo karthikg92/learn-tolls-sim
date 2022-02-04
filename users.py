@@ -22,9 +22,6 @@ class Users:
 
         df['volume'] = round(self.city_scaling[self.city] * df['volume']/splits)
 
-        # TODO: draw volume from a distribution to go beyond theory!
-        # Devansh thinks: Results might hold if total num of users is fixed!
-
         df['vot'] = self.vot_realization()
 
         df.rename(columns={"origin": "orig", "destination": "dest", "volume": "vol"}, inplace=True)
@@ -47,7 +44,10 @@ class Users:
         if fixed_vot:
             vot_array = np.ones(self.num_users)
         else:
-            vot_array = 0.7 * np.ones(self.num_users) + 0.6 * np.random.rand(self.num_users)
+            vot_array = 0.7 * np.ones(self.num_users) + 0.6 * np.random.rand(self.num_users)  # Med variance
+            # vot_array = 1.2 * np.ones(self.num_users) + 0.6 * np.random.rand(self.num_users)  # High mean
+            # vot_array = 0.2 * np.ones(self.num_users) + 0.6 * np.random.rand(self.num_users)  # Low mean
+            # vot_array = 0.9 * np.ones(self.num_users) + 0.2 * np.random.rand(self.num_users)  # Low variance
         return vot_array
 
     def new_instance(self, fixed_vot=False):

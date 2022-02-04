@@ -84,3 +84,28 @@ class StochasticProgramWithConstantVOT:
 
         return None
 
+
+class TestOutsideOption:
+
+    def __init__(self):
+        # city name for the experiment
+        self.city = 'SiouxFalls'
+
+        # Initialize users
+        users = Users(self.city)
+        print('Number of users: ', users.num_users)
+
+        # Initialize network
+        network = Network(self.city)
+
+        print('[Original Network]: Num Nodes: ', network.NumNodes)
+        print('[Original Network]: Num Edges: ', network.NumEdges)
+
+        network.add_outside_option(users)
+
+        print('[New Network]: Num Nodes: ', network.NumNodes)
+        print('[New Network]: Num Edges: ', network.NumEdges)
+
+
+
+        #

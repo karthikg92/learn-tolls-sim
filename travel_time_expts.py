@@ -23,15 +23,17 @@ class TravelTimeExperiments:
         self.city = 'SiouxFalls'
 
         # Range of T values for the experiment
-        self.Trange = [2, 5, 10, 20]
+        #self.Trange = [5, 25, 50, 100, 250, 500]
+        self.Trange = [2]
 
         # Initialize networks and users
 
-        # city network for the experiment
-        network = Network(self.city)
-
         # users for the experiment
         users = Users(self.city)
+
+        # city network for the experiment
+        network = Network(self.city)
+        network.add_outside_option(users) # Adding the outside option links
 
         # Compute toll without VOT
         no_vot_toll = self.compute_no_vot_toll(network, users)
@@ -42,7 +44,6 @@ class TravelTimeExperiments:
         # compare these methods with gradient descent
         # run for Trange time steps and log total travel times
         self.compare(network, users, no_vot_toll, static_vot_toll)
-
 
     def compare(self, network, users, no_vot_toll, static_vot_toll):
 
@@ -141,7 +142,7 @@ class TravelTimeExperiments:
             root_folder_path = 'ResultLogs/TravelTimeExperiments_' + path_time + '/'
             os.mkdir(root_folder_path)
         finally:
-            print('[sqrt_trends] Folder exists')
+            print('[TravelTimeExpts] Folder exists')
         return root_folder_path
 
     @staticmethod
@@ -190,3 +191,6 @@ class TravelTimeExperiments:
         plt.tight_layout()
         plt.savefig(path + '.png')
         plt.close()
+
+        # save dataframe
+        log.to_csv(path + '.csv')
