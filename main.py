@@ -7,8 +7,8 @@ from sanity_check import StochasticProgramWithConstantVOT
 from sanity_check import TestOutsideOption
 from travel_time_expts import TravelTimeExperiments
 
-cp = cProfile.Profile()
-cp.enable()
+# cp = cProfile.Profile()
+# cp.enable()
 
 '''
 Experiments or algorithms we want to run
@@ -19,9 +19,9 @@ Experiments or algorithms we want to run
 TravelTimeExperiments()
 # TestOutsideOption()
 
-cp.disable()
-stats = pstats.Stats(cp).sort_stats('cumtime')
-stats.print_stats()
+# cp.disable()
+# stats = pstats.Stats(cp).sort_stats('cumtime')
+# stats.print_stats()
 
 
 

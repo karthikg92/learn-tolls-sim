@@ -11,6 +11,8 @@ from optimization import compute_stochastic_program_toll
 from optimization import compute_same_vot_toll
 from optimization import user_equilibrium_with_tolls
 from optimization import optimal_flow
+from optimization import UserEquilibriumWithTolls
+from optimization import OptimalFlow
 
 
 class TravelTimeExperiments:
@@ -23,8 +25,8 @@ class TravelTimeExperiments:
         self.city = 'SiouxFalls'
 
         # Range of T values for the experiment
-        #self.Trange = [5, 25, 50, 100, 250, 500]
-        self.Trange = [2]
+        self.Trange = [5, 25, 50, 100, 250, 500]
+        #self.Trange = [5]
 
         # Initialize networks and users
 
@@ -51,6 +53,12 @@ class TravelTimeExperiments:
                                     'ttt_gr_desc', 'ttt_no_vot', 'ttt_stochastic',
                                     'vio_gr_desc', 'vio_no_vot', 'vio_stochastic'])
 
+        # Initializing user equilibrium solver
+        ue_with_tolls = UserEquilibriumWithTolls(network, users, no_vot_toll)
+
+        # initializing optimal flow solver
+        opt_solver = OptimalFlow(network, users)
+
         for T in self.Trange:
 
             # Initialize performance parameters
@@ -74,23 +82,46 @@ class TravelTimeExperiments:
                 print("[TravelTimeExperiments] Iteration %d of %d" % (t, T))
 
                 # compute optimal flow
-                x_opt, _ = optimal_flow(network, users)
+                #x_opt, _ = optimal_flow(network, users)
+                opt_solver.set_obj(users)
+                x_opt, _ = opt_solver.solve()
+
                 obj_opt += network.latency_array() @ x_opt @ users.vot_array()
 
                 # No VOT consideration for toll computation
-                x, f = user_equilibrium_with_tolls(network, users, no_vot_toll)
+
+                # test: comments
+                # x, f = user_equilibrium_with_tolls(network, users, no_vot_toll)
+                # test: new version
+                ue_with_tolls.set_obj(users, no_vot_toll)
+                x, f = ue_with_tolls.solve()
+
                 obj_no_vot += network.latency_array() @ x @ users.vot_array()
                 ttt_no_vot += f @ network.edge_latency
                 vio_no_vot += f - network.capacity
 
                 # Stochastic program tolls
-                x, f = user_equilibrium_with_tolls(network, users, static_vot_toll)
+
+                # test comment
+                # x, f = user_equilibrium_with_tolls(network, users, static_vot_toll)
+
+                # replacement:
+                ue_with_tolls.set_obj(users, static_vot_toll)
+                x, f = ue_with_tolls.solve()
+
                 obj_stochastic += network.latency_array() @ x @ users.vot_array()
                 ttt_stochastic += f @ network.edge_latency
                 vio_stochastic += f - network.capacity
 
                 # Gradient descent algorithm
-                x, f = user_equilibrium_with_tolls(network, users, gr_desc_tolls)
+
+                # test: comment
+                # x, f = user_equilibrium_with_tolls(network, users, gr_desc_tolls)
+
+                # new version test
+                ue_with_tolls.set_obj(users, gr_desc_tolls)
+                x, f = ue_with_tolls.solve()
+
                 obj_gr_desc += network.latency_array() @ x @ users.vot_array()
                 ttt_gr_desc += f @ network.edge_latency
                 vio_gr_desc += f - network.capacity
