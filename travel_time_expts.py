@@ -35,17 +35,24 @@ class TravelTimeExperiments:
 
         # city network for the experiment
         network = Network(self.city)
-        network.add_outside_option(users) # Adding the outside option links
+        network.add_outside_option(users)  # Adding the outside option links
 
         # Compute toll without VOT
         no_vot_toll = self.compute_no_vot_toll(network, users)
 
         # compute static toll with VOT consideration
         static_vot_toll = self.compute_static_vot_toll(network, users)
+        print('Stochastic program:')
+        print('min toll: ', min(static_vot_toll))
+        print('max toll: ', max(static_vot_toll))
+        print('average toll: ', np.mean(static_vot_toll))
+
+
 
         # compare these methods with gradient descent
         # run for Trange time steps and log total travel times
-        self.compare(network, users, no_vot_toll, static_vot_toll)
+
+        # self.compare(network, users, no_vot_toll, static_vot_toll)
 
     def compare(self, network, users, no_vot_toll, static_vot_toll):
 

@@ -67,7 +67,7 @@ class Network:
 
     def _estimate_tt_params(self):
         # There was a +1 for the free flow time to ensure we don't divide by zero.
-        self.raw_edges['free_flow_time'] = (self.raw_edges['length'] / self.raw_edges['speed'])
+        self.raw_edges['free_flow_time'] = (self.raw_edges['length'] / self.raw_edges['speed'] )
         self.raw_edges['time_sensitivity'] = 2 * self.raw_edges['free_flow_time'] / self.raw_edges['capacity']
         tt_params = list(zip(self.raw_edges.free_flow_time, self.raw_edges.time_sensitivity))
         return tt_params
@@ -127,7 +127,11 @@ class Network:
         dist = shortest_path(self.tt_adj, directed=True)
 
         # factor by which outside option is longer than the shortest path
-        outside_option_scale = 1.5
+        outside_length_scale = 1.5
+        outside_capacity_scale = 1e3
+        # How many people are using the network? Log that to see if 1.5 is reasonable
+        # concern: other uses can still take an extra link you create for one user! Hence be conservative/ or prevent
+        # them from joining this link
 
         # add nodes and edges
         for user_id in range(users.num_users):
@@ -143,17 +147,19 @@ class Network:
 
             self.raw_edges = self.raw_edges.append({'edge_tail': orig_node,
                                                     'edge_head': self.NumNodes + user_id,
-                                                    'length': 0.5 * outside_option_scale * dist[orig_node, dest_node],
-                                                    'capacity': users.data[user_id]['vol'],
+                                                    'length': 0.5 * outside_length_scale * dist[orig_node, dest_node],
+                                                    'capacity': outside_capacity_scale * users.data[user_id]['vol'],
                                                     'speed': 1},
                                                    ignore_index=True)
 
             self.raw_edges = self.raw_edges.append({'edge_tail': self.NumNodes + user_id,
                                                     'edge_head': dest_node,
-                                                    'length': 0.5 * outside_option_scale * dist[orig_node, dest_node],
-                                                    'capacity': users.data[user_id]['vol'],
+                                                    'length': 0.5 * outside_length_scale * dist[orig_node, dest_node],
+                                                    'capacity': outside_capacity_scale * users.data[user_id]['vol'],
                                                     'speed': 1},
                                                    ignore_index=True)
+
+        self.raw_edges['length'] = self.raw_edges['length'] / 1e3
 
         self.raw_edges['edge_head'] = self.raw_edges['edge_head'].astype(int)
         self.raw_edges['edge_tail'] = self.raw_edges['edge_tail'].astype(int)
@@ -163,7 +169,6 @@ class Network:
         self.NumNodes = self.raw_vertices.shape[0]  # number of nodes
         self.NumEdges = self.raw_edges.shape[0]  # number of edges
         self.edge_to_nodes = list(zip(self.raw_edges.edge_tail, self.raw_edges.edge_head))
-
 
         self.next_from_edge = self._next_from_edge()
         self.prev_from_edge = self._prev_from_edge()
