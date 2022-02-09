@@ -26,8 +26,9 @@ class TravelTimeExperiments:
         self.city = 'SiouxFalls'
 
         # Range of T values for the experiment
-        self.Trange = [5, 25, 50, 100, 250, 500]
-        #self.Trange = [2]
+        # self.Trange = [5, 25, 50, 100, 250, 500]
+        # self.Trange = [10000]
+        self.Trange = [5, 25, 50, 100, 250]
 
         # Initialize networks and users
 
@@ -94,7 +95,19 @@ class TravelTimeExperiments:
             vio_no_vot = np.zeros(network.NumEdges)
 
             gr_desc_tolls = np.zeros(network.NumEdges)
-            step_size = 1e-1 / np.sqrt(T)
+
+            # Track evolution of total tolls
+            total_toll = [sum(gr_desc_tolls[:network.physical_num_edges])]
+            total_virtual_toll = [sum(gr_desc_tolls[network.physical_num_edges:])]
+
+            # TODO: check if  convergence will be achieved even without warm start
+            # gr_desc_tolls = static_vot_toll
+
+            # step_size = 1e-1 / np.sqrt(T)
+            # TODO: Revert to 1e-1 to ensure it converges!
+            # step_size = 1e-2 / np.sqrt(T)
+            step_size = 5e-4 / np.sqrt(T)
+            # step_size = 5e-3 / np.sqrt(T)
 
             for t in range(T):
                 print("[TravelTimeExperiments] Iteration %d of %d" % (t, T))
@@ -148,6 +161,19 @@ class TravelTimeExperiments:
                 gr_desc_tolls += step_size * (f - np.array(network.capacity))
                 gr_desc_tolls[gr_desc_tolls < 0] = 0
 
+                total_toll.append(sum(gr_desc_tolls[:network.physical_num_edges]))
+                total_virtual_toll.append(sum(gr_desc_tolls[network.physical_num_edges:]))
+
+                plt.plot(total_toll, label='total toll on real edges')
+                plt.plot(total_virtual_toll, label='total toll on virtual edges')
+                plt.legend()
+                plt.savefig(self.folder_path+'toll_evoultion_' + str(T) + '.png')
+                plt.close()
+
+                plt.hist(gr_desc_tolls[:network.physical_num_edges])
+                plt.savefig(self.folder_path+'current_histogram' + str(T) + '.png')
+                plt.close()
+
                 # Draw a new user VOT realization for next time step
                 users.new_instance()
 
@@ -186,7 +212,8 @@ class TravelTimeExperiments:
             # Plot gradient descent tolls on map
             plot_edge_values(gr_desc_tolls[:network.physical_num_edges],
                              self.folder_path+'tolls_t_' + str(T) + '.png',
-                             'Gradient descent tolls after T = ' + str(T))
+                             'Gradient descent tolls after T = ' + str(T),
+                             truncate_flag=False)
 
             # Compare tolls in histogram
             plt.hist(gr_desc_tolls[:network.physical_num_edges], alpha=0.3, label='gr_desc')
