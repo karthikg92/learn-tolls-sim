@@ -22,6 +22,7 @@ class Network:
 
         self.NumNodes = self.raw_vertices.shape[0]  # number of nodes
         self.NumEdges = self.raw_edges.shape[0]  # number of edges
+        self.physical_num_edges = self.raw_edges.shape[0]  # number of actual edges (in case proxy ones get added later)
         self.edge_to_nodes = list(zip(self.raw_edges.edge_tail, self.raw_edges.edge_head))
 
         self.next_from_edge = self._next_from_edge()

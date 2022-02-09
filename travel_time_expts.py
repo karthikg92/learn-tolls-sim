@@ -13,6 +13,7 @@ from optimization import user_equilibrium_with_tolls
 from optimization import optimal_flow
 from optimization import UserEquilibriumWithTolls
 from optimization import OptimalFlow
+from map_plot import plot_edge_values
 
 
 class TravelTimeExperiments:
@@ -26,7 +27,7 @@ class TravelTimeExperiments:
 
         # Range of T values for the experiment
         self.Trange = [5, 25, 50, 100, 250, 500]
-        #self.Trange = [5]
+        #self.Trange = [2]
 
         # Initialize networks and users
 
@@ -35,10 +36,17 @@ class TravelTimeExperiments:
 
         # city network for the experiment
         network = Network(self.city)
+        self.num_physical_edges = network.NumEdges
         network.add_outside_option(users)  # Adding the outside option links
 
         # Compute toll without VOT
         no_vot_toll = self.compute_no_vot_toll(network, users)
+        plot_edge_values(no_vot_toll[:self.num_physical_edges],
+                         self.folder_path+'no_vot_toll.png',
+                         "Toll ignoring VOT (in $)",
+                         truncate_flag=False,
+                         plot_lim=[0, 0.5])
+
 
         # compute static toll with VOT consideration
         static_vot_toll = self.compute_static_vot_toll(network, users)
@@ -46,13 +54,16 @@ class TravelTimeExperiments:
         print('min toll: ', min(static_vot_toll))
         print('max toll: ', max(static_vot_toll))
         print('average toll: ', np.mean(static_vot_toll))
-
-
+        plot_edge_values(static_vot_toll[:self.num_physical_edges],
+                         self.folder_path+'stochastic_program_toll.png',
+                         "Fixed toll from stochastic program (in $)",
+                         truncate_flag=False,
+                         plot_lim=[0, 0.5])
 
         # compare these methods with gradient descent
         # run for Trange time steps and log total travel times
 
-        # self.compare(network, users, no_vot_toll, static_vot_toll)
+        self.compare(network, users, no_vot_toll, static_vot_toll)
 
     def compare(self, network, users, no_vot_toll, static_vot_toll):
 
@@ -171,6 +182,19 @@ class TravelTimeExperiments:
 
             # Invoke the plot function
             self.performance_plot(log, self.folder_path + 'comparison')
+
+            # Plot gradient descent tolls on map
+            plot_edge_values(gr_desc_tolls[:network.physical_num_edges],
+                             self.folder_path+'tolls_t_' + str(T) + '.png',
+                             'Gradient descent tolls after T = ' + str(T))
+
+            # Compare tolls in histogram
+            plt.hist(gr_desc_tolls[:network.physical_num_edges], alpha=0.3, label='gr_desc')
+            plt.hist(static_vot_toll[:network.physical_num_edges],  alpha=0.3, label='stochastic_prog')
+            plt.hist(no_vot_toll[:network.physical_num_edges], alpha=0.3, label='no_vot')
+            plt.legend()
+            plt.savefig(self.folder_path+'histogram'+str(T)+'.png', dpi=250)
+            plt.close()
 
     @staticmethod
     def create_folder():

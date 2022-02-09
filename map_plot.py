@@ -4,7 +4,6 @@ import matplotlib.colors as colors
 import matplotlib.cm as cmx
 import matplotlib.patches as patches
 from matplotlib.collections import PatchCollection
-
 import pandas as pd
 import geopandas as gpd
 import contextily as cx
@@ -17,62 +16,74 @@ def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
     return new_cmap
 
 
-df_vertices = pd.read_csv('Locations/SiouxFalls/vertices.csv')
+def plot_edge_values(value, figpath, figname, truncate_flag=True, plot_lim=None):
 
-gdf_vertices = gpd.GeoDataFrame(
-    df_vertices, geometry=gpd.points_from_xy(df_vertices.xcoord, df_vertices.ycoord), crs="EPSG:4326")
-gdf_vertices = gdf_vertices.to_crs('EPSG:3857')
+    # Load vertices
+    df_vertices = pd.read_csv('Locations/SiouxFalls/vertices.csv')
 
-# plot nodes
-ax = gdf_vertices.plot(color='red')
+    # Load edges
+    df_edges = pd.read_csv('Locations/SiouxFalls/edges.csv')
 
-# introduce basemap
-cx.add_basemap(ax, alpha=0.5)
+    # Initialize figure
+    fig, ax = plt.subplots()
+    fig.set_size_inches(8, 10)
 
-# read new edge matrix
-df_edges = pd.read_csv('Locations/SiouxFalls/edges.csv')
+    # Create Nodes for Plotting
+    gdf_vertices = gpd.GeoDataFrame(
+        df_vertices, geometry=gpd.points_from_xy(df_vertices.xcoord, df_vertices.ycoord), crs="EPSG:4326")
+    gdf_vertices = gdf_vertices.to_crs('EPSG:3857')
 
-# augment with coordinates
-gdf_vertices['lat'] = gdf_vertices.geometry.y
-gdf_vertices['lon'] = gdf_vertices.geometry.x
+    # Plot Nodes
+    ax = gdf_vertices.plot(color='red', ax=ax)
 
-merge_df = gdf_vertices.filter(['vert_id', 'lat', 'lon'], axis=1)
-merge_df = merge_df.rename(columns={'lat': 'tail_lat', 'lon': 'tail_lon'})
+    # Add basemap
+    cx.add_basemap(ax, alpha=0.5)
 
-df_edges = df_edges.merge(merge_df, how='left', left_on='edge_tail', right_on='vert_id')
-df_edges = df_edges.drop(columns=['vert_id'])
+    # Create edges
+    gdf_vertices['lat'] = gdf_vertices.geometry.y
+    gdf_vertices['lon'] = gdf_vertices.geometry.x
 
-merge_df = merge_df.rename(columns={'tail_lat': 'head_lat', 'tail_lon': 'head_lon'})
-df_edges = df_edges.merge(merge_df, how='left', left_on='edge_head', right_on='vert_id')
-df_edges = df_edges.drop(columns=['vert_id'])
+    merge_df = gdf_vertices.filter(['vert_id', 'lat', 'lon'], axis=1)
+    merge_df = merge_df.rename(columns={'lat': 'tail_lat', 'lon': 'tail_lon'})
 
-# plot edges
+    df_edges = df_edges.merge(merge_df, how='left', left_on='edge_tail', right_on='vert_id')
+    df_edges = df_edges.drop(columns=['vert_id'])
 
-# set colormap
-cm = plt.get_cmap('Oranges')
-cm = truncate_colormap(cm, minval=0.3, maxval=1, n=100)
+    merge_df = merge_df.rename(columns={'tail_lat': 'head_lat', 'tail_lon': 'head_lon'})
+    df_edges = df_edges.merge(merge_df, how='left', left_on='edge_head', right_on='vert_id')
+    df_edges = df_edges.drop(columns=['vert_id'])
 
-cNorm = colors.Normalize(vmin=0, vmax=25900)
-scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
+    # set colormap
+    cm = plt.get_cmap('Oranges')
+    if truncate_flag:
+        cm = truncate_colormap(cm, minval=0.3, maxval=1, n=100)
+    if plot_lim is not None:
+        c_norm = colors.Normalize(vmin=plot_lim[0], vmax=plot_lim[1])
+    else:
+        c_norm = colors.Normalize(vmin=min(value), vmax=max(value))
+    scalar_map = cmx.ScalarMappable(norm=c_norm, cmap=cm)
 
-df_edges = df_edges.reset_index()  # make sure indexes pair with number of rows
+    df_edges = df_edges.reset_index()  # make sure indexes pair with number of rows
+    for index, row in df_edges.iterrows():
+        colorval = scalar_map.to_rgba(value[index])
+        a = patches.FancyArrowPatch((row['tail_lon'], row['tail_lat']),
+                                    (row['head_lon'], row['head_lat']),
+                                    connectionstyle="arc3,rad=.1",
+                                    arrowstyle="Fancy, head_length=7, head_width=5",
+                                    color=colorval)
+        # Adding each edge
+        plt.gca().add_patch(a)
 
-patch_collection=[]
-for index, row in df_edges.iterrows():
-    colorval = scalarMap.to_rgba(row['capacity'])
-    a = patches.FancyArrowPatch((row['tail_lon'], row['tail_lat']),
-                                (row['head_lon'], row['head_lat']),
-                                connectionstyle="arc3,rad=.1",
-                                arrowstyle="Fancy, head_length=7, head_width=5",
-                                color=colorval)
+    # Adding colorbar
+    plt.colorbar(scalar_map, ax=ax)
 
-    plt.gca().add_patch(a)
+    # Turn off tick labels
+    ax.set_yticklabels([])
+    ax.set_xticklabels([])
+    ax.axes.xaxis.set_visible(False)
+    ax.axes.yaxis.set_visible(False)
+    plt.title(figname)
 
-    patch_collection.append(a)
+    fig.savefig(figpath, dpi=250)
+    plt.close()
 
-
-plt.colorbar(scalarMap, ax=ax)
-
-# Turn off tick labels
-ax.set_yticklabels([])
-ax.set_xticklabels([])
