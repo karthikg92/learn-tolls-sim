@@ -367,6 +367,7 @@ class UserEquilibriumWithTolls:
         self.model = None
         self.x_eu = None
         self.x_e = None
+        self.x_excess = None
         self.define_model(network, users, tolls)
 
     def solve(self):
@@ -419,6 +420,9 @@ class UserEquilibriumWithTolls:
         x_e = m.addVars(num_edges, lb=0.0, ub=GRB.INFINITY, vtype=GRB.CONTINUOUS, name="x_e")
         m.addConstrs(x_eu.sum(e, '*') == x_e[e] for e in range(num_edges))
 
+        # Introduce excess flows:
+        x_excess = m.addVars(network.physical_num_edges, lb=0.0, ub=GRB.INFINITY, vtype=GRB.CONTINUOUS, name="x_excess")
+
         # demand from origin constraint
         m.addConstrs(
             sum([x_eu[e, u] for e in network.next(node=users.data[u]['orig'])]) == users.data[u]['vol']
@@ -449,9 +453,19 @@ class UserEquilibriumWithTolls:
                 sum(x_eu[g, u] for g in network.next(node=n))
                 for n in exclude_od_nodes)
 
+        # Penalize excess flows:
+        m.addConstrs(x_excess[e] >= x_e[e] - network.edge_latency[e]
+                     for e in range(network.physical_num_edges))
+
+        for e in range(network.physical_num_edges):
+            # x_excess[e].Obj = 1e-2
+            # x_excess[e].Obj = 1e-1
+            x_excess[e].Obj = 1e-2
+
         self.model = m
         self.x_eu = x_eu
         self.x_e = x_e
+        self.x_excess = x_excess
 
         return None
 
@@ -550,5 +564,4 @@ class OptimalFlow:
         self.x_e = x_e
 
         return None
-
 

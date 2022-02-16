@@ -28,6 +28,7 @@ class TravelTimeExperiments:
         # Range of T values for the experiment
         # self.Trange = [5, 25, 50, 100, 250, 500]
         # self.Trange = [10000]
+        # self.Trange = [2, 5, 10]
         self.Trange = [5, 25, 50, 100, 250]
 
         # Initialize networks and users
@@ -113,7 +114,7 @@ class TravelTimeExperiments:
                 print("[TravelTimeExperiments] Iteration %d of %d" % (t, T))
 
                 # compute optimal flow
-                #x_opt, _ = optimal_flow(network, users)
+                # x_opt, _ = optimal_flow(network, users)
                 opt_solver.set_obj(users)
                 x_opt, _ = opt_solver.solve()
 
@@ -137,7 +138,16 @@ class TravelTimeExperiments:
                 # x, f = user_equilibrium_with_tolls(network, users, static_vot_toll)
 
                 # replacement:
-                ue_with_tolls.set_obj(users, static_vot_toll)
+
+                # TODO: initially 1e-5, then 1e-3 was better
+                noise_vector = 1e-3 * (np.random.rand(network.NumEdges) - 0.5)
+                noise_vector[noise_vector < 0] = 0
+                noise_vector[network.physical_num_edges:] = 0
+
+                static_vot_toll_with_noise = static_vot_toll + noise_vector
+
+                ue_with_tolls.set_obj(users, static_vot_toll_with_noise)
+                # ue_with_tolls.set_obj(users, static_vot_toll)
                 x, f = ue_with_tolls.solve()
 
                 obj_stochastic += network.latency_array() @ x @ users.vot_array()
@@ -283,3 +293,18 @@ class TravelTimeExperiments:
 
         # save dataframe
         log.to_csv(path + '.csv')
+
+
+"""
+1. Debug noisy tolls with 2 link example
+2. Different means for user groups 
+3. Update NoVOT to use population mean
+4. Add Ed's Ideas (choose scale carefully)
+
+Additional ideas for Appendix:
+1. Multiple cities
+2. Warm starts
+3. Convergence dynamics 
+    (i.e., don't need to wait till T=100 for tolls to come within a ball)
+4. VCG discussion
+"""
