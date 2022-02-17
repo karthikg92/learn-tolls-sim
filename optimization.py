@@ -93,7 +93,7 @@ def compute_stochastic_program_toll(network, users, num_sim=1000, constant_vot=F
     return tolls
 
 
-def compute_same_vot_toll(network, users):
+def compute_same_vot_toll(network, users, vot=None):
 
     num_edges = network.NumEdges
     num_users = users.num_users
@@ -146,7 +146,10 @@ def compute_same_vot_toll(network, users):
         m.addConstr(x_e[e] <= network.capacity[e], name='capacity' + str(e))
 
     # objective function
-    obj = sum([x_e[e] * network.edge_latency[e] for e in range(num_edges)])
+    if vot is False:
+        obj = sum([x_e[e] * network.edge_latency[e] for e in range(num_edges)])
+    else:
+        obj = sum([vot * x_e[e] * network.edge_latency[e] for e in range(num_edges)])
 
     m.setObjective(obj, GRB.MINIMIZE)
 

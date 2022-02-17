@@ -16,7 +16,7 @@ Experiments or algorithms we want to run
 # stochastic_program_check = StochasticProgramWithConstantVOT()
 # SqrtTrends()
 # JustifyVOT()
-NetworkPlots()
+# NetworkPlots()
 TravelTimeExperiments()
 # TestOutsideOption()
 
