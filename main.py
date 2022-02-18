@@ -7,6 +7,8 @@ from sanity_check import StochasticProgramWithConstantVOT
 from sanity_check import TestOutsideOption
 from travel_time_expts import TravelTimeExperiments
 from network_plots import NetworkPlots
+from sanity_check import CheckIfNoiseHelpsStochasticProgram
+
 # cp = cProfile.Profile()
 # cp.enable()
 
@@ -19,6 +21,8 @@ Experiments or algorithms we want to run
 # NetworkPlots()
 TravelTimeExperiments()
 # TestOutsideOption()
+# StochasticProgramWithConstantVOT()
+# CheckIfNoiseHelpsStochasticProgram()
 
 # cp.disable()
 # stats = pstats.Stats(cp).sort_stats('cumtime')

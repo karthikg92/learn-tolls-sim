@@ -29,7 +29,7 @@ class TravelTimeExperiments:
         # self.Trange = [5, 25, 50, 100, 250, 500]
         # self.Trange = [10000]
         # self.Trange = [2, 5]
-        self.Trange = [5, 25, 50, 100, 250]
+        self.Trange = [5, 25, 50, 100, 250, 500, 1000]
 
         # Initialize networks and users
 
@@ -167,14 +167,14 @@ class TravelTimeExperiments:
                 # replacement:
 
                 # TODO: initially 1e-5, then 1e-3 was better
-                # noise_vector = 1e-3 * (np.random.rand(network.NumEdges) - 0.5)
-                # noise_vector[noise_vector < 0] = 0
-                # noise_vector[network.physical_num_edges:] = 0
-                #
-                # static_vot_toll_with_noise = static_vot_toll + noise_vector
-                #
-                # ue_with_tolls.set_obj(users, static_vot_toll_with_noise)
-                ue_with_tolls.set_obj(users, group_specific_vot_toll)
+                noise_vector = 1e-3 * (np.random.rand(network.NumEdges) - 0.5)
+                noise_vector[noise_vector < 0] = 0
+                noise_vector[network.physical_num_edges:] = 0
+
+                group_specific_vot_toll_with_noise = group_specific_vot_toll + noise_vector
+
+                ue_with_tolls.set_obj(users, group_specific_vot_toll_with_noise)
+                # ue_with_tolls.set_obj(users, group_specific_vot_toll)
                 x, f = ue_with_tolls.solve()
 
                 obj_stochastic += network.latency_array() @ x @ users.vot_array()
@@ -363,7 +363,7 @@ class TravelTimeExperiments:
 
 
 """
-1. Debug noisy tolls with 2 link example
+1. Debug noisy tolls with 2 link example -- DONE
 2. Different means for user groups -- DONE
 3. Update NoVOT to use population mean -- DONE
 4. Add Ed's Ideas (choose scale carefully) -- DONE
