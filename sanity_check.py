@@ -244,3 +244,23 @@ class CheckIfNoiseHelpsStochasticProgram:
         finally:
             print('[SanityCheckExpts] Folder exists')
         return root_folder_path
+
+
+class ComputeOptimalTTT:
+
+    def __init__(self):
+
+        # city name for the experiment
+        self.city = 'SiouxFalls'
+
+        # Initialize users
+        users = Users(self.city)
+        users.new_instance(fixed_vot=True)
+
+        # Initialize network
+        network = Network(self.city)
+        self.num_physical_edges = network.NumEdges
+        network.add_outside_option(users)  # Adding the outside option links
+
+        optimal_flow(network, users)
+

@@ -338,6 +338,9 @@ def optimal_flow(network, users):
     # run the optimization
     m.optimize()
 
+    # Print objective value for testing
+    print(m.getObjective().getValue())
+
     # If infeasible, terminate program
     assert m.status != GRB.INFEASIBLE
 

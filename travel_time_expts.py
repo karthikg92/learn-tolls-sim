@@ -14,6 +14,7 @@ from optimization import optimal_flow
 from optimization import UserEquilibriumWithTolls
 from optimization import OptimalFlow
 from map_plot import plot_edge_values
+from utils import *
 
 
 class TravelTimeExperiments:
@@ -56,7 +57,8 @@ class TravelTimeExperiments:
                          "Toll with population mean VOT (in $)",
                          truncate_flag=False,
                          plot_lim=[0, 1.5])
-
+        vector_to_file(self.folder_path+'population_mean_toll.csv',
+                       population_mean_vot_toll[:self.num_physical_edges])
 
         # Compute toll with grouo-specific mean VOT
         group_specific_vot_toll = self.compute_group_specific_mean_vot_toll(network, users)
@@ -65,7 +67,8 @@ class TravelTimeExperiments:
                          "Toll with group-specific VOT (in $)",
                          truncate_flag=False,
                          plot_lim=[0, 1.5])
-
+        vector_to_file(self.folder_path+'group_specific_VOT_toll.csv',
+                       group_specific_vot_toll[:self.num_physical_edges])
 
         # compute static toll with VOT consideration
         # static_vot_toll = self.compute_static_vot_toll(network, users)
@@ -109,6 +112,7 @@ class TravelTimeExperiments:
             ttt_stochastic = 0
             ttt_const_update = 0
             ttt_no_vot = 0
+            ttt_opt = 0
 
             vio_gr_desc = np.zeros(network.NumEdges)
             vio_stochastic = np.zeros(network.NumEdges)
@@ -128,6 +132,13 @@ class TravelTimeExperiments:
             total_toll_const_update = [sum(const_update_tolls[:network.physical_num_edges])]
             total_virtual_toll_const_update = [sum(const_update_tolls[network.physical_num_edges:])]
 
+            # log for the run
+            run_log_path = self.folder_path + 'T_' + str(T) + '_log.csv'
+            write_row(run_log_path,
+                      ['t', 'min_gr_desc_toll', 'max_gr_desc_toll',
+                       'avg_gr_desc_toll', 'total_gr_desc', 'zero_toll_links_gr_desc',
+                       'min_const_update_toll', 'max_const_update_toll',
+                       'avg_const_update_toll', 'total_const_update', 'zero_toll_links_const_update'])
 
             # TODO: check if  convergence will be achieved even without warm start
             # gr_desc_tolls = static_vot_toll
@@ -143,15 +154,13 @@ class TravelTimeExperiments:
                 # compute optimal flow
                 # x_opt, _ = optimal_flow(network, users)
                 opt_solver.set_obj(users)
-                x_opt, _ = opt_solver.solve()
+                x_opt, f_opt = opt_solver.solve()
 
                 obj_opt += network.latency_array() @ x_opt @ users.vot_array()
+                ttt_opt += network.latency_array() @ f_opt
 
                 # No VOT consideration for toll computation
 
-                # test: comments
-                # x, f = user_equilibrium_with_tolls(network, users, no_vot_toll)
-                # test: new version
                 ue_with_tolls.set_obj(users, population_mean_vot_toll)
                 x, f = ue_with_tolls.solve()
 
@@ -161,12 +170,6 @@ class TravelTimeExperiments:
 
                 # Stochastic program tolls
 
-                # test comment
-                # x, f = user_equilibrium_with_tolls(network, users, static_vot_toll)
-
-                # replacement:
-
-                # TODO: initially 1e-5, then 1e-3 was better
                 noise_vector = 1e-3 * (np.random.rand(network.NumEdges) - 0.5)
                 noise_vector[noise_vector < 0] = 0
                 noise_vector[network.physical_num_edges:] = 0
@@ -183,10 +186,6 @@ class TravelTimeExperiments:
 
                 # Gradient descent algorithm
 
-                # test: comment
-                # x, f = user_equilibrium_with_tolls(network, users, gr_desc_tolls)
-
-                # new version test
                 ue_with_tolls.set_obj(users, gr_desc_tolls)
                 x, f = ue_with_tolls.solve()
 
@@ -233,6 +232,19 @@ class TravelTimeExperiments:
                 # Draw a new user VOT realization for next time step
                 users.new_instance()
 
+                # log data from this time step
+
+                toll_gr = gr_desc_tolls[:network.physical_num_edges]
+                num_zeros_gr_desc = sum(toll_gr < 1e-2)
+                toll_gr = toll_gr[toll_gr >= 1e-2]
+                toll_const = const_update_tolls[:network.physical_num_edges]
+                num_zeros_const = sum(toll_const < 1e-2)
+                toll_const = toll_const[toll_const >= 1e-2]
+
+                write_row(run_log_path,
+                          [t, min(toll_gr), max(toll_gr), np.mean(toll_gr), sum(toll_gr), num_zeros_gr_desc,
+                           min(toll_const), max(toll_const), np.mean(toll_const), sum(toll_const), num_zeros_const])
+
             # Parameter logging
 
             # Normalized regret
@@ -248,10 +260,10 @@ class TravelTimeExperiments:
             const_update_vio = self.compute_normalized_violation(vio_const_update, T, network.capacity_array())
 
             # Total travel time
-            ttt_no_vot_avg = ttt_no_vot / T
-            ttt_gr_desc_avg = ttt_gr_desc / T
-            ttt_stochastic_avg = ttt_stochastic / T
-            ttt_const_update = ttt_const_update / T
+            ttt_no_vot_avg = ttt_no_vot / ttt_opt - 1
+            ttt_gr_desc_avg = ttt_gr_desc / ttt_opt - 1
+            ttt_stochastic_avg = ttt_stochastic / ttt_opt - 1
+            ttt_const_update = ttt_const_update / ttt_opt - 1
 
             log = log.append({'T': T,
                               'regret_gr_desc': gr_desc_regret,
@@ -273,10 +285,21 @@ class TravelTimeExperiments:
 
             # Plot gradient descent tolls on map
             plot_edge_values(gr_desc_tolls[:network.physical_num_edges],
-                             self.folder_path+'tolls_t_' + str(T) + '.png',
+                             self.folder_path+'tolls_gr_desc_t_' + str(T) + '.png',
                              'Gradient descent tolls after T = ' + str(T),
                              truncate_flag=False,
                              plot_lim=[0, 1.5])
+            vector_to_file(self.folder_path+'tolls_gr_desc_t_' + str(T) + '.csv',
+                           gr_desc_tolls[:network.physical_num_edges])
+
+            # Plot constant update tolls on map
+            plot_edge_values(const_update_tolls[:network.physical_num_edges],
+                             self.folder_path + 'tolls_const_update_t_' + str(T) + '.png',
+                             'Constant update tolls after T = ' + str(T),
+                             truncate_flag=False,
+                             plot_lim=[0, 1.5])
+            vector_to_file(self.folder_path + 'tolls_const_update_t_' + str(T) + '.csv',
+                           const_update_tolls[:network.physical_num_edges])
 
             # Compare tolls in histogram
             plt.hist(gr_desc_tolls[:network.physical_num_edges], alpha=0.3, label='gradient descent')
@@ -351,7 +374,7 @@ class TravelTimeExperiments:
         axes[2].plot(log['T'], log['ttt_no_vot'], '*-', c='tab:green', label='population mean VOT')
         axes[2].plot(log['T'], log['ttt_const_update'], '*-', c='tab:red', label='constant update')
         axes[2].set_xlabel('T')
-        axes[2].set_ylabel('Average Travel Time')
+        axes[2].set_ylabel('Fractional Change in Total Travel Time')
         axes[2].legend(loc="upper right")
 
         plt.tight_layout()
