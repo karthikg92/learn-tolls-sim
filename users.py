@@ -21,7 +21,7 @@ class Users:
         splits = 1
         df = pd.DataFrame(np.repeat(self.raw_od.values, splits, axis=0), columns=self.raw_od.columns)
         self.num_users = splits * df.shape[0]
-        self.vot_mean_array = 10 * np.ones(self.num_users) + 40 * np.random.rand(self.num_users)
+        self.vot_mean_array = 5 * np.ones(self.num_users) + 95 * np.random.rand(self.num_users)
 
         df['volume'] = round(self.city_scaling[self.city] * df['volume']/splits)
 

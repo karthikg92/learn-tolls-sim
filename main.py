@@ -20,7 +20,7 @@ Experiments or algorithms we want to run
 # SqrtTrends()
 # JustifyVOT()
 NetworkPlots()
-# TravelTimeExperiments()
+TravelTimeExperiments()
 # TestOutsideOption()
 # StochasticProgramWithConstantVOT()
 # CheckIfNoiseHelpsStochasticProgram()

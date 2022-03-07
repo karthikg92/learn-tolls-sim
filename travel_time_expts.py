@@ -31,6 +31,7 @@ class TravelTimeExperiments:
         # self.Trange = [10000]
         # self.Trange = [2, 5]
         self.Trange = [5, 25, 50, 100, 250, 500, 1000]
+        # self.Trange = [1500, 2000]
 
         # Initialize networks and users
 

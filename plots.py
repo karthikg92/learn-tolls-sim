@@ -30,27 +30,27 @@ fig, axes = plt.subplots(nrows=1, ncols=2)
 fig.set_size_inches(12, 6)
 
 axes[0].plot(df['T'], df['regret_gr_desc'], '*-', c='tab:blue', label='gradient descent')
-axes[0].plot(df['T'], df['regret_stochastic'], '*-', c='tab:orange', label='group-specific mean VOT')
-axes[0].plot(df['T'], df['regret_no_vot'], '*-', c='tab:green', label='population mean VOT')
-axes[0].plot(df['T'], df['regret_const_update'], '*-', c='tab:red', label='constant update')
-axes[0].set_xlabel('T')
+axes[0].plot(df['T'], df['regret_stochastic'], '*-', c='tab:orange', label='Group VoT')
+axes[0].plot(df['T'], df['regret_no_vot'], '*-', c='tab:green', label='Population VoT')
+axes[0].plot(df['T'], df['regret_const_update'], '*-', c='tab:red', label='Reactive update')
+axes[0].set_xlabel('Number of Time Periods')
 axes[0].set_ylabel('Average Normalized Regret')
 axes[0].legend(loc="lower right")
 
 axes[1].plot(df['T'], df['vio_gr_desc'], '*-', c='tab:blue', label='gradient descent')
-axes[1].plot(df['T'], df['vio_stochastic'], '*-', c='tab:orange', label='group-specific mean VOT')
-axes[1].plot(df['T'], df['vio_no_vot'], '*-', c='tab:green', label='population mean VOT')
-axes[1].plot(df['T'], df['vio_const_update'], '*-', c='tab:red', label='constant update')
-axes[1].set_xlabel('T')
+axes[1].plot(df['T'], df['vio_stochastic'], '*-', c='tab:orange', label='Group VoT')
+axes[1].plot(df['T'], df['vio_no_vot'], '*-', c='tab:green', label='Population VoT')
+axes[1].plot(df['T'], df['vio_const_update'], '*-', c='tab:red', label='Reactive update')
+axes[1].set_xlabel('Number of Time Periods')
 axes[1].set_ylabel('Average Normalized Capacity Violation')
 axes[1].legend(loc="upper right")
 
 
 plt.tight_layout()
-plt.savefig(path + '/figures/fig1.png', dpi=250)
+plt.savefig(path + '/figures/sqrtTconvergence.png', dpi=250)
 
-tikzplotlib.clean_figure()
-tikzplotlib.save(path + '/figures/fig1.tex')
+# tikzplotlib.clean_figure()
+# tikzplotlib.save(path + '/figures/fig1.tex')
 
 plt.close()
 
@@ -68,19 +68,20 @@ plt.rcParams['font.size'] = '14'
 fig, axes = plt.subplots(nrows=1, ncols=1)
 fig.set_size_inches(6, 6)
 
-axes.plot(df['T'], df['ttt_gr_desc'], '*-', c='tab:blue', label='gradient descent')
-axes.plot(df['T'], df['ttt_stochastic'], '*-', c='tab:orange', label='group-specific mean VOT')
-axes.plot(df['T'], df['ttt_no_vot'], '*-', c='tab:green', label='population mean VOT')
-axes.plot(df['T'], df['ttt_const_update'], '*-', c='tab:red', label='constant update')
-axes.set_xlabel('T')
-axes.set_ylabel('Fractional Change in Total Travel Time')
+axes.plot(df['T'], 1 + df['ttt_gr_desc'], '*-', c='tab:blue', label='gradient descent')
+axes.plot(df['T'], 1 + df['ttt_stochastic'], '*-', c='tab:orange', label='Group VoT')
+axes.plot(df['T'], 1 + df['ttt_no_vot'], '*-', c='tab:green', label='Population VoT')
+axes.plot(df['T'], 1 + df['ttt_const_update'], '*-', c='tab:red', label='Reactive update')
+axes.set_xlabel('Number of Time Periods')
+axes.set_ylabel('$\\dfrac{ \\mathrm{Total \;\, Travel \;\, Time}}{ \\mathrm{Optimal \;\, Total \;\, Travel \;\, '
+                'Time}}$')
 axes.legend(loc="lower right")
 
 plt.tight_layout()
-plt.savefig(path + '/figures/fig2.png', dpi=250)
+plt.savefig(path + '/figures/totaltraveltime.png', dpi=250)
 
-tikzplotlib.clean_figure()
-tikzplotlib.save(path + '/figures/fig2.tex')
+# tikzplotlib.clean_figure()
+# tikzplotlib.save(path + '/figures/fig2.tex')
 
 plt.close()
 
@@ -98,7 +99,7 @@ def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
     return new_cmap
 
 
-def plot_edge_values(value, figpath, truncate_flag=True, plot_lim=None, label=None):
+def plot_edge_values(value, figpath, truncate_flag=True, plot_lim=None, label=None, text=None):
 
     # Load vertices
     df_vertices = pd.read_csv('Locations/SiouxFalls/vertices.csv')
@@ -147,6 +148,9 @@ def plot_edge_values(value, figpath, truncate_flag=True, plot_lim=None, label=No
     scalar_map = cmx.ScalarMappable(norm=c_norm, cmap=cm)
 
     df_edges = df_edges.reset_index()  # make sure indexes pair with number of rows
+
+    # print(df_edges)
+
     for index, row in df_edges.iterrows():
         colorval = scalar_map.to_rgba(value[index])
         a = patches.FancyArrowPatch((row['tail_lon'], row['tail_lat']),
@@ -166,6 +170,14 @@ def plot_edge_values(value, figpath, truncate_flag=True, plot_lim=None, label=No
     ax.axes.xaxis.set_visible(False)
     ax.axes.yaxis.set_visible(False)
 
+    if text is not None:
+        x_pos = -1.0775e7
+        y_pos = 5.405e6
+        for line in text:
+            # print('adding text')
+            plt.text(x_pos, y_pos, line, weight="bold")
+            y_pos -= 1e3
+
     fig.savefig(figpath, dpi=250)
 
     # Not effective
@@ -182,10 +194,10 @@ latency = (df_latency[0]*60).to_list()  # for units in minutes
 
 
 # make plots
-plot_edge_values(capacity, path + '/figures/Fig3_capacity.png', truncate_flag=True,
-                 label='capacity (vehicles per hour)')
-plot_edge_values(latency, path + '/figures/Fig3_latency.png', truncate_flag=True,
-                 label='latency (minutes)')
+plot_edge_values(capacity, path + '/figures/capacity.png', truncate_flag=True,
+                 label='Capacity (vehicles per hour)')
+plot_edge_values(latency, path + '/figures/latency.png', truncate_flag=True,
+                 label='Travel time (minutes)')
 
 
 """
@@ -223,30 +235,38 @@ population_mean_toll = population_mean_toll[0].to_list()
 # population_mean_toll = [toll if toll > 0 else 0 for toll in population_mean_toll]
 
 
-plot_edge_values(gr_desc_toll, path + '/figures/Fig4_gr_desc.png',
+plot_edge_values(gr_desc_toll, path + '/figures/toll_gr_desc.png',
                  truncate_flag=False,
                  label='Toll (dollars)',
-                 plot_lim=[0, 1.5])
+                 plot_lim=[0, 2.7],
+                 text=['Avg. Toll: 0.77',
+                       'Max. Toll: 2.54'])
 
-plot_edge_values(const_update_toll, path + '/figures/Fig4_const_update.png',
+plot_edge_values(const_update_toll, path + '/figures/toll_reactive_update.png',
                  truncate_flag=False,
                  label='Toll (dollars)',
-                 plot_lim=[0, 1.5])
+                 plot_lim=[0, 2.7],
+                 text=['Avg. Toll: 0.73',
+                       'Max. Toll: 2.40'])
 
-plot_edge_values(group_specific_toll, path + '/figures/Fig4_group_spec.png',
+plot_edge_values(group_specific_toll, path + '/figures/toll_group_vot.png',
                  truncate_flag=False,
                  label='Toll (dollars)',
-                 plot_lim=[0, 1.5])
+                 plot_lim=[0, 2.7],
+                 text=['Avg. Toll: 0.80',
+                       'Max. Toll: 2.63'])
 
-plot_edge_values(population_mean_toll, path + '/figures/Fig4_pop_mean.png',
+plot_edge_values(population_mean_toll, path + '/figures/toll_pop_vot.png',
                  truncate_flag=False,
                  label='Toll (dollars)',
-                 plot_lim=[0, 1.5])
+                 plot_lim=[0, 2.7],
+                 text=['Avg. Toll: 0.45',
+                       'Max. Toll: 2.71'])
 
 """
 Push relevant statistics from the map into a table
 """
-table_path = path + '/figures/Fig4_table.csv'
+table_path = path + '/figures/stats_table.csv'
 try:
     os.remove(table_path)
 except:
@@ -263,32 +283,85 @@ write_row(table_path, ['Gradient descent',
 
 
 non_zero_tolls = [toll for toll in const_update_toll if toll > 1e-2 ]
-write_row(table_path, ['Constant update',
+write_row(table_path, ['Reactive update',
                        min(const_update_toll),
                        max(const_update_toll),
                        sum(np.array(const_update_toll) > 1e-2),
                        np.mean(non_zero_tolls)])
 
 non_zero_tolls = [toll for toll in group_specific_toll if toll > 1e-2]
-write_row(table_path, ['Group Specific VOT update',
+write_row(table_path, ['Group Specific VoT',
                        min(group_specific_toll),
                        max(group_specific_toll),
                        sum(np.array(group_specific_toll) > 1e-2),
                        np.mean(non_zero_tolls)])
 
 non_zero_tolls = [toll for toll in population_mean_toll if toll > 1e-2]
-write_row(table_path, ['Population mean toll',
+write_row(table_path, ['Population VoT',
                        min(population_mean_toll),
                        max(population_mean_toll),
                        sum(np.array(population_mean_toll) > 1e-2),
                        np.mean(population_mean_toll)])
-
 
 """
 ####################
 Figure 5
 ####################
 """
+gr_desc_toll = pd.read_csv(path + 'tolls_gr_desc_t_1000.csv', header=None)
+gr_desc_toll = gr_desc_toll[0].to_list()
+
+nbin = 20
+count, bins = np.histogram(gr_desc_toll, bins=nbin)
+
+xloc = [(bins[i] + bins[i+1])/2 for i in range(len(bins) -1)]
+
+plt.bar(xloc, count/sum(count)*100, width=bins[1]-bins[0])
+plt.xlabel('Tolls (dollars)')
+plt.ylabel('Percentage of edges')
+
+plt.tight_layout()
+plt.savefig(path + '/figures/tolls_histogram.png')
+plt.close()
 
 
 
+# count, bins_count = np.histogram(c, bins=500)
+#
+# plt.hist(c, bins=50, color='tab:grey')
+# # pdf = count / sum(count)
+# # cdf = np.cumsum(pdf)
+# # plt.plot(bins_count[1:], cdf, color="black")
+
+
+"""
+####################
+Figure 6
+####################
+"""
+# t100_path = path + 'T_100_log.csv'
+t1000_path = path + 'T_1000_log.csv'
+#
+# df = pd.read_csv(t100_path)
+#
+# plt.rcParams['font.size'] = '14'
+# plt.plot(df['t'], df[' total_const_update'], label='Reactive update', alpha=0.7)
+# plt.plot(df['t'], df[' total_gr_desc'], label='gradient descent', alpha=0.7)
+# plt.legend(loc='lower right')
+# plt.xlabel('Time steps')
+# plt.ylabel('Total tolls (dollars)')
+#
+# plt.savefig(path + '/figures/Fig6_t100.png')
+# plt.close()
+
+
+df = pd.read_csv(t1000_path)
+
+plt.rcParams['font.size'] = '14'
+plt.plot(df['t'], df[' total_const_update'], label='Reactive update', alpha=0.7)
+plt.plot(df['t'], df[' total_gr_desc'], label='gradient descent', alpha=0.7)
+plt.legend(loc='lower right')
+plt.xlabel('Number of Time Periods')
+plt.ylabel('Total tolls (dollars)')
+
+plt.savefig(path + '/figures/toll_convergence.png')
