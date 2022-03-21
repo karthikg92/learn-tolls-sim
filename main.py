@@ -6,6 +6,7 @@ from sqrt_trends import SqrtTrends
 from sanity_check import StochasticProgramWithConstantVOT
 from sanity_check import TestOutsideOption
 from travel_time_expts import TravelTimeExperiments
+from iid_od_expt import IidOdExpts
 from network_plots import NetworkPlots
 from sanity_check import CheckIfNoiseHelpsStochasticProgram
 from sanity_check import ComputeOptimalTTT
@@ -19,8 +20,9 @@ Experiments or algorithms we want to run
 # stochastic_program_check = StochasticProgramWithConstantVOT()
 # SqrtTrends()
 # JustifyVOT()
-NetworkPlots()
-TravelTimeExperiments()
+# NetworkPlots()
+# TravelTimeExperiments()
+IidOdExpts()
 # TestOutsideOption()
 # StochasticProgramWithConstantVOT()
 # CheckIfNoiseHelpsStochasticProgram()

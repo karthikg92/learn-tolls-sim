@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-# np.random.seed(5)
+np.random.seed(5)
 
 
 class Users:
@@ -14,7 +14,7 @@ class Users:
         self.num_users = None
         self.vot_mean_array = None
         self.data = self._generate_users()
-
+        self.native_OD_demand = [self.data[i]['vol'] for i in range(len(self.data))]
 
     def _generate_users(self):
 
@@ -49,10 +49,6 @@ class Users:
         elif type(fixed_vot) is float:
             vot_array = fixed_vot * np.ones(self.num_users)
         else:
-            # vot_array = 0.7 * np.ones(self.num_users) + 0.6 * np.random.rand(self.num_users)  # Med variance
-            # vot_array = 1.2 * np.ones(self.num_users) + 0.6 * np.random.rand(self.num_users)  # High mean
-            # vot_array = 0.2 * np.ones(self.num_users) + 0.6 * np.random.rand(self.num_users)  # Low mean
-            # vot_array = 0.9 * np.ones(self.num_users) + 0.2 * np.random.rand(self.num_users)  # Low variance
             vot_array = 0.8 * self.vot_mean_array + 0.4 * self.vot_mean_array * np.random.rand(self.num_users)
         return vot_array
 
@@ -60,6 +56,24 @@ class Users:
         new_vot = self.vot_realization(fixed_vot=fixed_vot)
         for u in self.data.keys():
             self.data[u]['vot'] = new_vot[u]
+        return None
+
+    def od_realization(self):
+        new_vol = np.zeros(len(self.num_users))
+        for od_index in range(self.num_users):
+            for user_index in self.native_OD_demand[od_index]:
+                if np.random.rand() < 0.8:
+                    new_vol[od_index] += 1
+                else:
+                    new_route = np.random.randint(0, self.num_users-1)
+                    new_vol[new_route] += 1
+        return new_vol
+
+    def new_iid_od_instance(self):
+        self.new_instance()
+        new_vol = self.od_realization()
+        for u in self.data.keys():
+            self.data[u]['vol'] = new_vol[u]
         return None
 
     def population_vot_mean(self):

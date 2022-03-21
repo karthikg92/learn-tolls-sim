@@ -90,9 +90,10 @@ class TravelTimeExperiments:
 
     def compare(self, network, users, population_mean_vot_toll, group_specific_vot_toll):
 
-        log = pd.DataFrame(columns=['T', 'regret_gr_desc', 'regret_no_vot', 'regret_stochastic',
+        log = pd.DataFrame(columns=['T', 'regret_gr_desc_not_normalized', 'regret_gr_desc', 'regret_no_vot',
+                                    'regret_stochastic',
                                     'ttt_gr_desc', 'ttt_no_vot', 'ttt_stochastic',
-                                    'vio_gr_desc', 'vio_no_vot', 'vio_stochastic'])
+                                    'vio_gr_desc', 'vio_gr_desc_not_normalized', 'vio_no_vot', 'vio_stochastic'])
 
         # Initializing user equilibrium solver
         ue_with_tolls = UserEquilibriumWithTolls(network, users, population_mean_vot_toll)
@@ -268,6 +269,7 @@ class TravelTimeExperiments:
 
             log = log.append({'T': T,
                               'regret_gr_desc': gr_desc_regret,
+                              'regret_gr_desc_not_normalized': obj_gr_desc - obj_opt,
                               'regret_no_vot': no_vot_regret,
                               'regret_stochastic': stochastic_regret,
                               'regret_const_update': const_update_regret,
@@ -276,6 +278,7 @@ class TravelTimeExperiments:
                               'ttt_stochastic': ttt_stochastic_avg,
                               'ttt_const_update': ttt_const_update,
                               'vio_gr_desc': gr_desc_vio,
+                              'vio_gr_desc_not_normalized': max(vio_gr_desc),
                               'vio_no_vot': no_vot_vio,
                               'vio_stochastic': stochastic_vio,
                               'vio_const_update': const_update_vio},
@@ -387,11 +390,6 @@ class TravelTimeExperiments:
 
 
 """
-1. Debug noisy tolls with 2 link example -- DONE
-2. Different means for user groups -- DONE
-3. Update NoVOT to use population mean -- DONE
-4. Add Ed's Ideas (choose scale carefully) -- DONE
-
 Additional ideas for Appendix:
 1. Multiple cities
 2. Warm starts
