@@ -1,29 +1,34 @@
-import random
 
+import random
 import pandas as pd
 import geopandas as gpd
 import os
 import matplotlib.pyplot as plt
-import tikzplotlib
 import numpy as np
-from utils import *
-
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
 import matplotlib.patches as patches
 from matplotlib.collections import PatchCollection
 import contextily as cx
+from utils import *
 
 
-path = 'ResultLogs/TravelTimeExperiments/'
+data_path = 'Results/'
+fig_path = 'Results/Figures/'
+
+if os.path.isdir(fig_path):
+    pass
+else:
+    os.mkdir(fig_path)
+
 
 """
 ####################
-Figure 1
+Average Normalized Regret and Capacity Violation
 ####################
 """
 
-df = pd.read_csv(path + 'comparison.csv')
+df = pd.read_csv(data_path + 'comparison.csv')
 
 plt.rcParams['font.size'] = '14'
 fig, axes = plt.subplots(nrows=1, ncols=2)
@@ -47,21 +52,18 @@ axes[1].legend(loc="upper right")
 
 
 plt.tight_layout()
-plt.savefig(path + '/figures/sqrtTconvergence.png', dpi=250)
-
-# tikzplotlib.clean_figure()
-# tikzplotlib.save(path + '/figures/fig1.tex')
+plt.savefig(fig_path + 'sqrtTconvergence.png', dpi=250)
 
 plt.close()
 
 
 """
 ####################
-Figure 2
+Average normalized Travel time 
 ####################
 """
 
-df = pd.read_csv(path + 'comparison.csv')
+df = pd.read_csv(data_path + 'comparison.csv')
 
 plt.rcParams['font.size'] = '14'
 
@@ -78,16 +80,14 @@ axes.set_ylabel('$\\dfrac{ \\mathrm{Total \;\, Travel \;\, Time}}{ \\mathrm{Opti
 axes.legend(loc="lower right")
 
 plt.tight_layout()
-plt.savefig(path + '/figures/totaltraveltime.png', dpi=250)
-
-# tikzplotlib.clean_figure()
-# tikzplotlib.save(path + '/figures/fig2.tex')
+plt.savefig(fig_path + 'totaltraveltime.png', dpi=250)
 
 plt.close()
 
+
 """
 ####################
-Figure 3
+Map plots of networks: Topology, capacity, latency
 ####################
 """
 
@@ -149,8 +149,6 @@ def plot_edge_values(value, figpath, truncate_flag=True, plot_lim=None, label=No
 
     df_edges = df_edges.reset_index()  # make sure indexes pair with number of rows
 
-    # print(df_edges)
-
     for index, row in df_edges.iterrows():
         colorval = scalar_map.to_rgba(value[index])
         a = patches.FancyArrowPatch((row['tail_lon'], row['tail_lat']),
@@ -162,7 +160,6 @@ def plot_edge_values(value, figpath, truncate_flag=True, plot_lim=None, label=No
         plt.gca().add_patch(a)
 
     # Adding colorbar
-    # plt.colorbar(scalar_map, ax=ax, label=label)
     plt.colorbar(scalar_map, ax=ax)
     plt.title(label)
 
@@ -182,9 +179,6 @@ def plot_edge_values(value, figpath, truncate_flag=True, plot_lim=None, label=No
 
     # plt.tight_layout()
     fig.savefig(figpath, dpi=250)
-
-    # Not effective
-    # tikzplotlib.save(figpath.split('.')[0] + '.tex')
 
     plt.close()
 
@@ -245,36 +239,37 @@ def plot_topology(figpath):
     # plt.tight_layout()
     fig.savefig(figpath, dpi=250)
 
-    # Not effective
-    # tikzplotlib.save(figpath.split('.')[0] + '.tex')
-
     plt.close()
 
 
 # load data
-df_capacity = pd.read_csv(path + 'capacity.csv', header=None)
-df_latency = pd.read_csv(path + 'latency.csv', header=None)
+df_capacity = pd.read_csv(data_path + 'capacity.csv', header=None)
+df_latency = pd.read_csv(data_path + 'latency.csv', header=None)
 capacity = (df_capacity[0]/2.4).to_list()  # for a per hour number
 latency = (df_latency[0]*60).to_list()  # for units in minutes
 
 
 # make plots
-plot_edge_values(capacity, path + '/figures/capacity.png', truncate_flag=True,
+plot_edge_values(capacity, fig_path + 'capacity.png', truncate_flag=True,
                  label='Capacity (vehicles/hour)')
-plot_edge_values(latency, path + '/figures/latency.png', truncate_flag=True,
+plot_edge_values(latency, fig_path + 'latency.png', truncate_flag=True,
                  label='Travel time (minutes)')
-plot_topology(path + '/figures/topology.png')
+plot_topology(fig_path + 'topology.png')
 
 
 """
 ####################
-Figure 4
+Plotting tolls on the map:
+    - Gradient descent tolls
+    - Constant update (i.e., reactive tolling)
+    - Population mean Vot
+    - User mean VoT
 ####################
 """
 
 '''
 
-Need to plot the following on the map:
+Need to plot the following files on the map:
 
 tolls_gr_desc_t_1000.csv
 tolls_const_update_t_1000.csv
@@ -284,45 +279,41 @@ population_mean_toll.csv
 '''
 
 # load data
-gr_desc_toll = pd.read_csv(path + 'tolls_gr_desc_t_1000.csv', header=None)
+gr_desc_toll = pd.read_csv(data_path + 'tolls_gr_desc_t_1000.csv', header=None)
 gr_desc_toll = gr_desc_toll[0].to_list()
-# gr_desc_toll = [toll if toll > 0 else 0 for toll in gr_desc_toll]
 
-const_update_toll = pd.read_csv(path + 'tolls_const_update_t_1000.csv', header=None)
+const_update_toll = pd.read_csv(data_path + 'tolls_const_update_t_1000.csv', header=None)
 const_update_toll = const_update_toll[0].to_list()
-# const_update_toll = [toll if toll > 0 else 0 for toll in const_update_toll]
 
-group_specific_toll = pd.read_csv(path + 'group_specific_VOT_toll.csv', header=None)
+group_specific_toll = pd.read_csv(data_path + 'group_specific_VOT_toll.csv', header=None)
 group_specific_toll = group_specific_toll[0].to_list()
-# group_specific_toll = [toll if toll > 0 else 0 for toll in group_specific_toll]
 
-population_mean_toll = pd.read_csv(path + 'population_mean_toll.csv', header=None)
+population_mean_toll = pd.read_csv(data_path + 'population_mean_toll.csv', header=None)
 population_mean_toll = population_mean_toll[0].to_list()
-# population_mean_toll = [toll if toll > 0 else 0 for toll in population_mean_toll]
 
 
-plot_edge_values(gr_desc_toll, path + '/figures/toll_gr_desc.png',
+plot_edge_values(gr_desc_toll, fig_path + 'toll_gr_desc.png',
                  truncate_flag=False,
                  label='Toll (dollars)',
                  plot_lim=[0, 2.7],
                  text=['Avg. Toll: 0.77',
                        'Max. Toll: 2.54'])
 
-plot_edge_values(const_update_toll, path + '/figures/toll_reactive_update.png',
+plot_edge_values(const_update_toll, fig_path + 'toll_reactive_update.png',
                  truncate_flag=False,
                  label='Toll (dollars)',
                  plot_lim=[0, 2.7],
                  text=['Avg. Toll: 0.73',
                        'Max. Toll: 2.40'])
 
-plot_edge_values(group_specific_toll, path + '/figures/toll_group_vot.png',
+plot_edge_values(group_specific_toll, fig_path + 'toll_group_vot.png',
                  truncate_flag=False,
                  label='Toll (dollars)',
                  plot_lim=[0, 2.7],
                  text=['Avg. Toll: 0.80',
                        'Max. Toll: 2.63'])
 
-plot_edge_values(population_mean_toll, path + '/figures/toll_pop_vot.png',
+plot_edge_values(population_mean_toll, fig_path + 'toll_pop_vot.png',
                  truncate_flag=False,
                  label='Toll (dollars)',
                  plot_lim=[0, 2.7],
@@ -332,7 +323,7 @@ plot_edge_values(population_mean_toll, path + '/figures/toll_pop_vot.png',
 """
 Push relevant statistics from the map into a table
 """
-table_path = path + '/figures/stats_table.csv'
+table_path = fig_path + 'stats_table.csv'
 try:
     os.remove(table_path)
 except:
@@ -371,10 +362,10 @@ write_row(table_path, ['Population VoT',
 
 """
 ####################
-Figure 5
+Histogram of tolls generated by our algorithm
 ####################
 """
-gr_desc_toll = pd.read_csv(path + 'tolls_gr_desc_t_1000.csv', header=None)
+gr_desc_toll = pd.read_csv(data_path + 'tolls_gr_desc_t_1000.csv', header=None)
 gr_desc_toll = gr_desc_toll[0].to_list()
 
 nbin = 20
@@ -387,39 +378,17 @@ plt.xlabel('Tolls (dollars)')
 plt.ylabel('Percentage of edges')
 
 plt.tight_layout()
-plt.savefig(path + '/figures/tolls_histogram.png')
+plt.savefig(fig_path + 'tolls_histogram.png')
 plt.close()
 
 
-
-# count, bins_count = np.histogram(c, bins=500)
-#
-# plt.hist(c, bins=50, color='tab:grey')
-# # pdf = count / sum(count)
-# # cdf = np.cumsum(pdf)
-# # plt.plot(bins_count[1:], cdf, color="black")
-
-
 """
 ####################
-Figure 6
+Convergence of tolls within a few iterations
 ####################
 """
-# t100_path = path + 'T_100_log.csv'
-t1000_path = path + 'T_1000_log.csv'
-#
-# df = pd.read_csv(t100_path)
-#
-# plt.rcParams['font.size'] = '14'
-# plt.plot(df['t'], df[' total_const_update'], label='Reactive update', alpha=0.7)
-# plt.plot(df['t'], df[' total_gr_desc'], label='gradient descent', alpha=0.7)
-# plt.legend(loc='lower right')
-# plt.xlabel('Time steps')
-# plt.ylabel('Total tolls (dollars)')
-#
-# plt.savefig(path + '/figures/Fig6_t100.png')
-# plt.close()
 
+t1000_path = data_path + 'T_1000_log.csv'
 
 df = pd.read_csv(t1000_path)
 
@@ -430,15 +399,16 @@ plt.legend(loc='lower right')
 plt.xlabel('Number of Time Periods')
 plt.ylabel('Total tolls (dollars)')
 
-plt.savefig(path + '/figures/toll_convergence.png')
+plt.savefig(fig_path + 'toll_convergence.png')
+
 
 """
 #################################
-Merged performance figures for CDC
+Performance plot (merge regret, capacity violation and total travel time) 
 ##################################
 """
 
-df = pd.read_csv(path + 'comparison.csv')
+df = pd.read_csv(data_path + 'comparison.csv')
 
 plt.rcParams['font.size'] = '18'
 
@@ -470,12 +440,65 @@ axes[2].set_ylabel('Average Normalized Total Travel Time')
 # axes[2].legend(loc="lower right")
 
 plt.tight_layout()
-plt.savefig(path + '/figures/performance_plots_merged.png', dpi=250)
-
-# tikzplotlib.clean_figure()
-# tikzplotlib.save(path + '/figures/fig2.tex')
+plt.savefig(fig_path + 'performance_plots_merged.png', dpi=250)
 
 plt.close()
 
 
+""" 
+##########
+Plot for IID OD pairs
+#########
+"""
+
+df = pd.read_csv(data_path + 'iid_comparison.csv')
+
+# Capacity violation plots
+plt.rcParams['font.size'] = '24'
+
+plt.figure(figsize=(8, 6), dpi=250)
+
+x = np.log(np.array(df['T']))
+y = np.log(np.array(df['vio_gr_desc_not_normalized']))
+
+# If you want a linear fit
+# lin_fit = linregress(x[:], y[:])
+# y_lin = lin_fit.slope * x[:] + lin_fit.intercept
+# plt.plot(x[:], y_lin, '--', linewidth=3, label='Linear fit')
+
+# If you want the best fit with slope 0.5, do this instead:
+bias_vec = y[:] - 0.5 * x[:]
+bias = np.mean(bias_vec)
+y_lin = 0.5 * x[:] + bias
+plt.plot(x[:], y_lin, '--', linewidth=5, color='C1', label='Theoretical bound')
+
+
+# plt.text(3.5, 9.4, 'R-square = %.3f' % (lin_fit.rvalue**2))
+# plt.text(3.5, 9.1, 'Slope = %.3f' % lin_fit.slope)
+rmse = np.sqrt(np.mean((y - y_lin)**2))
+# plt.text(3.5, 9.1, 'RMSE = %.3f' % rmse)
+
+plt.plot(x, y, 's', linewidth=3, markersize=10, markeredgecolor='black', markerfacecolor='black', label='Algorithm 1')
+plt.xlabel('log(Time Periods)')
+plt.ylabel('log(Capacity Violation)')
+
+
+plt.legend(frameon=False, loc='upper left')
+plt.tight_layout()
+plt.savefig(fig_path + 'iid_cap_vio.png')
+plt.close()
+
+# regret plot
+x = np.array(df['T'])
+y = np.array(df['regret_gr_desc_not_normalized'])
+
+plt.figure(figsize=(8, 6.3), dpi=250)
+plt.plot(x, y, 's', linewidth=3, markersize=10, markeredgecolor='black', markerfacecolor='black', label='Algorithm 1')
+plt.xlabel('Time Periods')
+plt.ylabel('Regret')
+
+# plt.legend(frameon=False)
+plt.tight_layout()
+plt.savefig(fig_path + 'iid_regret.png')
+plt.close()
 

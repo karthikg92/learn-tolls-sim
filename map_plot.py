@@ -27,6 +27,7 @@ def plot_edge_values(value, figpath, figname, truncate_flag=True, plot_lim=None)
     # Initialize figure
     fig, ax = plt.subplots()
     fig.set_size_inches(8, 10)
+    plt.rcParams['font.size'] = '14'
 
     # Create Nodes for Plotting
     gdf_vertices = gpd.GeoDataFrame(
