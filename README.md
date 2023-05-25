@@ -1,6 +1,8 @@
 # Online Learning for Traffic Routing under Unknown Preferences #
 
-This repository contains code associated with the paper [Online Learning for Traffic Routing under Unknown Preferences](https://arxiv.org/abs/2203.17150) by Devansh Jalota, Karthik Gopalakrishhah, Navid Azizan, Ramesh Johari, and Marco Pavone.
+This repository contains the official implementation for the paper [Online Learning for Traffic Routing under Unknown Preferences](https://arxiv.org/abs/2203.17150) by [Devansh Jalota](https://stanfordasl.github.io//people/devansh-jalota/), [Karthik Gopalakrishhah](https://karthikg92.github.io), [Navid Azizan](https://azizan.mit.edu), [Ramesh Johari](https://web.stanford.edu/~rjohari/), and [Marco Pavone](https://profiles.stanford.edu/marco-pavone), published in [AISTATS'23](http://aistats.org/aistats2023/accepted.html).
+
+
 
 ## Data sources ##
 The traffic network, user flows, and road capacities are obtained from the [TNTP dataset](https://github.com/bstabler/TransportationNetworks)
